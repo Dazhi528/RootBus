@@ -28,6 +28,6 @@ dependencies {
     implementation 'com.gitee.Dazhi528:MvvmAndroid:1.0.3'
     implementation project(':library')
 }
-repositories {
-    mavenCentral()
-}
+//repositories {
+//    mavenCentral()
+//}
