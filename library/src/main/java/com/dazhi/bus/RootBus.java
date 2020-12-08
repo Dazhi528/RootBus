@@ -1,8 +1,9 @@
 package com.dazhi.bus;
 
 import androidx.annotation.NonNull;
-import java.util.HashMap;
+import java.lang.ref.SoftReference;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 功能：轻量的事件总线
@@ -14,10 +15,10 @@ import java.util.Map;
  */
 @SuppressWarnings({"unused", "RedundantSuppression"})
 public class RootBus {
-    private final Map<String, ObservableImpl<Object>> mapBusEvent;
+    final Map<String, ObservableImpl<Object>> mapBusEvent;
 
     private RootBus() {
-        mapBusEvent = new HashMap<>();
+        mapBusEvent = new ConcurrentHashMap<>();
     }
 
     private static final class classHolder {
@@ -37,9 +38,9 @@ public class RootBus {
     }
 
     @SuppressWarnings({"unchecked"})
-    private synchronized <T> Observable<T> get(@NonNull String key, @NonNull Class<T> type) {
+    private <T> Observable<T> get(@NonNull String key, @NonNull Class<T> type) {
         if (!mapBusEvent.containsKey(key)) {
-            mapBusEvent.put(key, new ObservableImpl<>());
+            mapBusEvent.put(key, new ObservableImpl<>(key, new SoftReference<>(mapBusEvent)));
         }
         return (Observable<T>) mapBusEvent.get(key);
     }

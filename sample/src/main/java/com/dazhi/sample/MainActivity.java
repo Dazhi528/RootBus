@@ -1,6 +1,9 @@
 package com.dazhi.sample;
 
 import android.widget.TextView;
+
+import androidx.lifecycle.Observer;
+
 import com.dazhi.bus.RootBus;
 import com.dazhi.libroot.root.RootSimpActivity;
 import com.dazhi.sample.databinding.ActivityMainBinding;
@@ -29,7 +32,6 @@ public class MainActivity extends RootSimpActivity<ActivityMainBinding> {
 
     @Override
     protected void initViewAndDataAndEvent() {
-        binding.btClear.setOnClickListener(v -> binding.tvShow.setText(""));
         binding.btSend.setOnClickListener(v -> {
             RootBus.get(KEY_EVENT_STR).post("我是值\n");
             RootBus.get(Apple.class).post(new Apple("红色\n"));
@@ -37,7 +39,13 @@ public class MainActivity extends RootSimpActivity<ActivityMainBinding> {
         });
         // 接收器注册
         RootBus.get(KEY_EVENT_STR).register(this, s -> binding.tvShow.append((String)s));
-        RootBus.get(Apple.class).register(this, apple -> binding.tvShow.append(apple.getColor()));
+        Observer<Apple> mAppleObserver = apple -> binding.tvShow.append(apple.getColor());
+        RootBus.get(Apple.class).registerForever(mAppleObserver);
+        // 注销测试
+        binding.btClear.setOnClickListener(v -> {
+            binding.tvShow.setText("Apple.class 接收器已注销\n");
+            RootBus.get(Apple.class).unregister(mAppleObserver);
+        });
     }
 
     private static final class Apple {
