@@ -19,7 +19,7 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
  * 创建日期：2018/4/19 14:55
  * 修改日期：2018/4/19 14:55
  */
-@SuppressWarnings({"unchecked", "rawtypes", "unused"})
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class RxBus {
     private final FlowableProcessor flowableProcessor;
 
