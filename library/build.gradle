@@ -20,9 +20,7 @@ android {
 }
 
 dependencies {
-    api "io.reactivex.rxjava3:rxjava:3.0.6"
-    api 'io.reactivex.rxjava3:rxandroid:3.0.0'
+    def lifecycle = "2.2.0"
+//    api "androidx.lifecycle:lifecycle-runtime:$lifecycle"
+    api "androidx.lifecycle:lifecycle-livedata:$lifecycle"
 }
-//repositories {
-//    mavenCentral()
-//}

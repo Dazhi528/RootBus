@@ -17,6 +17,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    buildFeatures {
+        viewBinding = true
+    }
     compileOptions {
         sourceCompatibility 1.8
         targetCompatibility 1.8
@@ -25,9 +28,6 @@ android {
 
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
-    implementation 'com.gitee.Dazhi528:MvvmAndroid:1.0.3'
+//    implementation 'com.github.Dazhi528:MvvmAndroidLib:1.0.7'
     implementation project(':library')
 }
-//repositories {
-//    mavenCentral()
-//}

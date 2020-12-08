@@ -4,7 +4,6 @@
     package="com.dazhi.sample">
 
     <application
-        android:name=".App"
         android:allowBackup="true"
         android:supportsRtl="true"
         android:icon="@mipmap/ic_launcher"

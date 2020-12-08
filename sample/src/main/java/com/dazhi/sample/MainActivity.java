@@ -1,7 +1,6 @@
 package com.dazhi.sample;
 
-import android.widget.TextView;
-import com.dazhi.libroot.root.RootSimpActivity;
+import android.app.Activity;
 
 /**
  * 功能：
@@ -10,22 +9,22 @@ import com.dazhi.libroot.root.RootSimpActivity;
  * 邮箱：wangzezhi528@163.com
  * 日期：20-9-9 下午6:36
  */
-public class MainActivity extends RootSimpActivity {
+public class MainActivity extends Activity { //RootSimpActivity<ActivityMainBinding> {
 
-    @Override
-    protected int getLayoutId() {
-        return R.layout.activity_main;
-    }
-
-    @Override
-    protected void initConfig(TextView tvToolTitle) {
-        tvToolTitle.setText("视图库");
-    }
-
-    @Override
-    protected void initViewAndDataAndEvent() {
-
-    }
-
+//    @NotNull
+//    @Override
+//    protected ActivityMainBinding initBinding() {
+//        return ActivityMainBinding.inflate(getLayoutInflater());
+//    }
+//
+//    @Override
+//    protected void initConfig(TextView tvToolTitle) {
+//        tvToolTitle.setText("视图库");
+//    }
+//
+//    @Override
+//    protected void initViewAndDataAndEvent() {
+//
+//    }
 
 }

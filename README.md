@@ -1,6 +1,7 @@
-# RootRxbus
-rxjava实现的rxbus工具库，如果项目里用的Rxjava，可配合此库用，如果没用到Rxjava，建议用EventBus库等
-
+# RootBus
+#### 说明：
+LiveData 简单实现eventbus功能，用于替换RxBus,EventBus的一些简单使用场景
+复杂场景时，如粘性事件等，请使用其它库(为了保持此库的轻量性，仅几行代码)
 ```
 allprojects {
     repositories {
@@ -10,6 +11,6 @@ allprojects {
 }
 
 dependencies {
-    implementation 'com.github.Dazhi528:RootRxbus:1.0.1'
+    implementation 'com.github.Dazhi528:RootBus:x.x.x'
 }
 ```
