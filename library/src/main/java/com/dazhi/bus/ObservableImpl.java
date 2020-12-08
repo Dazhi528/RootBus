@@ -32,7 +32,7 @@ final class ObservableImpl<T> implements Observable<T> {
 
     @MainThread
     @Override
-    public void register(@NonNull LifecycleOwner owner, @NonNull Observer<? super T> observer) {
+    public void register(@NonNull LifecycleOwner owner, @NonNull Observer<T> observer) {
         liveData.observe(owner, observer);
     }
 
@@ -44,7 +44,7 @@ final class ObservableImpl<T> implements Observable<T> {
 
     @MainThread
     @Override
-    public void unregister(@NonNull Observer<? super T> observer) {
+    public void unregister(@NonNull Observer<T> observer) {
         liveData.removeObserver(observer);
     }
 

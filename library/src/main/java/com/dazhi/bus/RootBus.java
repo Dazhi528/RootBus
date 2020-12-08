@@ -12,6 +12,7 @@ import java.util.Map;
  * 创建日期：2018/4/19 14:55
  * 修改日期：2018/4/19 14:55
  */
+@SuppressWarnings({"unused", "RedundantSuppression"})
 public class RootBus {
     private final Map<String, ObservableImpl<Object>> mapBusEvent;
 
@@ -31,10 +32,11 @@ public class RootBus {
         return self().get(key, Object.class);
     }
 
-    public static <T extends Observable> Observable<T> get(@NonNull Class<T> eventType) {
+    public static <T> Observable<T> get(@NonNull Class<T> eventType) {
         return self().get(eventType.getName(), eventType);
     }
 
+    @SuppressWarnings({"unchecked"})
     private synchronized <T> Observable<T> get(@NonNull String key, @NonNull Class<T> type) {
         if (!mapBusEvent.containsKey(key)) {
             mapBusEvent.put(key, new ObservableImpl<>());

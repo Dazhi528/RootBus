@@ -16,13 +16,13 @@ public interface Observable<T> {
     void post(T event);
 
     @MainThread
-    void register(@NonNull LifecycleOwner owner, @NonNull Observer<? super T> observer);
+    void register(@NonNull LifecycleOwner owner, @NonNull Observer<T> observer);
     @MainThread
     void registerForever(@NonNull Observer<T> observer);
 
     // 取消注册(粘性注册需手动调用此方法；非粘性注册无需调用，内部自动调用)
     @MainThread
-    void unregister(@NonNull final Observer<? super T> observer);
+    void unregister(@NonNull final Observer<T> observer);
     @MainThread
     void unregisters(@NonNull final LifecycleOwner owner);
 
