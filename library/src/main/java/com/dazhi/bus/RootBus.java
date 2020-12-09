@@ -6,7 +6,6 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @SuppressWarnings({"unused", "RedundantSuppression"})
 public class RootBus {
-    final Map<String, KeyLiveData<Object>> mapBusEvent;
+    final Map<String, EventLiveData<Object>> mapBusEvent;
 
     private RootBus() {
         mapBusEvent = new ConcurrentHashMap<>();
@@ -31,17 +30,18 @@ public class RootBus {
         static final RootBus INSTANCE = new RootBus();
     }
 
-    private static RootBus self() {
+    private static RootBus own() {
         return classHolder.INSTANCE;
     }
 
-    private <T> KeyLiveData<T> get(@NonNull String key) {
-        return (KeyLiveData<T>) mapBusEvent.get(key);
+    @SuppressWarnings("unchecked")
+    private <T> EventLiveData<T> get(@NonNull String key) {
+        return (EventLiveData<T>) mapBusEvent.get(key);
     }
 
+    @SuppressWarnings("unchecked")
     private static <T> void send(T event, boolean isMain) {
-        Class cur = event.getClass();
-        KeyLiveData<T> temp = self().get(cur.getName());
+        EventLiveData<T> temp = own().get(event.getClass().getName());
         if (temp != null) {
             if (RootBusExecutor.own().isMainThread()) {
                 temp.setValue(new Event<>(event, isMain));
@@ -59,44 +59,58 @@ public class RootBus {
         send(event, true);
     }
 
+    @SuppressWarnings("unchecked")
     @MainThread
-    private <T> void register(@NonNull Class<T> eventType, @NonNull LifecycleOwner owner, @NonNull Observer<T> observer) {
+    private <T> void _register(@NonNull Class<T> eventType, @NonNull LifecycleOwner owner, @NonNull Observer<T> observer) {
         String key = eventType.getName();
-        KeyLiveData<?> existing = mapBusEvent.get(key);
+        EventLiveData<?> existing = mapBusEvent.get(key);
         if (existing == null) {
-            KeyLiveData<T> newLd = new KeyLiveData<>();
-            newLd.observe(owner, new EventObserver(observer));
-            mapBusEvent.put(key, (KeyLiveData<Object>) newLd);
+            EventLiveData<T> newLd = new EventLiveData<>();
+            newLd.observe(owner, observer);
+            mapBusEvent.put(key, (EventLiveData<Object>) newLd);
         }
+    }
+    public static <T> void register(@NonNull Class<T> eventType, @NonNull LifecycleOwner owner, @NonNull Observer<T> observer) {
+        own()._register(eventType, owner, observer);
+    }
+
+    @SuppressWarnings("unchecked")
+    @MainThread
+    private <T> void _registerForever(@NonNull Class<T> eventType, @NonNull Observer<T> observer) {
+        String key = eventType.getName();
+        EventLiveData<?> existing = mapBusEvent.get(key);
+        if (existing == null) {
+            EventLiveData<T> newLd = new EventLiveData<>();
+            newLd.observeForever(observer);
+            mapBusEvent.put(key, (EventLiveData<Object>) newLd);
+        }
+    }
+    public static <T> void registerForever(@NonNull Class<T> eventType, @NonNull Observer<T> observer) {
+        own()._registerForever(eventType, observer);
     }
 
     @MainThread
-    private <T> void registerForever(@NonNull Class<T> eventType, @NonNull Observer<T> observer) {
+    private <T> void _unregister(@NonNull Class<T> eventType, @NonNull Observer<T> observer) {
         String key = eventType.getName();
-        KeyLiveData<?> existing = mapBusEvent.get(key);
-        if (existing == null) {
-            KeyLiveData<T> newLd = new KeyLiveData<>();
-            newLd.observeForever(new EventObserver(observer));
-            mapBusEvent.put(key, (KeyLiveData<Object>) newLd);
-        }
-    }
-
-    @MainThread
-    private <T> void unregister(@NonNull Class<T> eventType, @NonNull Observer<T> observer) {
-        String key = eventType.getName();
-        KeyLiveData<?> existing = mapBusEvent.get(key);
+        EventLiveData<?> existing = mapBusEvent.get(key);
         if (existing != null) {
             existing.removeObserver(observer);
         }
     }
+    public static <T> void unregister(@NonNull Class<T> eventType, @NonNull Observer<T> observer) {
+        own()._unregister(eventType, observer);
+    }
 
     @MainThread
-    private <T> void unregisters(@NonNull Class<T> eventType, @NonNull LifecycleOwner owner) {
+    private <T> void _unregisters(@NonNull Class<T> eventType, @NonNull LifecycleOwner owner) {
         String key = eventType.getName();
-        KeyLiveData<?> existing = mapBusEvent.get(key);
+        EventLiveData<?> existing = mapBusEvent.get(key);
         if (existing != null) {
             existing.removeObservers(owner);
         }
+    }
+    public static <T> void unregisters(@NonNull Class<T> eventType, @NonNull LifecycleOwner owner) {
+        own()._unregisters(eventType, owner);
     }
 
     /**
@@ -104,7 +118,8 @@ public class RootBus {
      * 功能：
      * 描述：
      */
-    private static final class KeyLiveData<T> extends MutableLiveData {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static final class EventLiveData<T> extends MutableLiveData {
         final HashMap<Observer, EventObserver<T>> mMapEvent = new HashMap<>();
 
         @Override
@@ -112,9 +127,9 @@ public class RootBus {
             if (mMapEvent.containsKey(observer)) {
                 return;
             }
-            EventObserver<T> temp = new EventObserver(observer);
-            mMapEvent.put(observer, temp);
-            super.observe(owner, temp);
+            EventObserver<T> e = new EventObserver(observer);
+            mMapEvent.put(observer, e);
+            super.observe(owner, e);
         }
 
         @Override
@@ -122,9 +137,9 @@ public class RootBus {
             if (mMapEvent.containsKey(observer)) {
                 return;
             }
-            EventObserver<T> temp = new EventObserver(observer);
-            mMapEvent.put(observer, temp);
-            super.observeForever(observer);
+            EventObserver<T> e = new EventObserver(observer);
+            mMapEvent.put(observer, e);
+            super.observeForever(e);
         }
 
         @Override
@@ -138,11 +153,9 @@ public class RootBus {
     }
 
     private static final class EventObserver<T> implements Observer<Event<T>> {
-        final MutableLiveData<Event<T>> mLiveData;
         final Observer<? super T> mObserver;
 
         EventObserver(final Observer<? super T> observer) {
-            mLiveData = new MutableLiveData<>();
             mObserver = observer;
         }
 
