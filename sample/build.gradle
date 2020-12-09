@@ -28,6 +28,6 @@ android {
 
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
-    implementation 'com.github.Dazhi528:MvvmAndroidLib:1.0.7'
+    implementation 'com.github.Dazhi528:MvvmAndroidFrame:1.0.7'
     implementation project(':library')
 }
