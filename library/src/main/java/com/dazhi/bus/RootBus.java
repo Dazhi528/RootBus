@@ -45,5 +45,17 @@ public class RootBus {
         return (Observable<T>) mapBusEvent.get(key);
     }
 
+    // 类类型方式
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static <T> void post(T event) {
+        Class cur = event.getClass();
+        get(cur).post(event);
+    }
+
+    // 字符串方式
+    public static void post(String key, Object value) {
+        get(key).post(value);
+    }
+
 }
 

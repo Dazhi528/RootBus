@@ -33,12 +33,16 @@ public class MainActivity extends RootSimpActivity<ActivityMainBinding> {
     @Override
     protected void initViewAndDataAndEvent() {
         binding.btSend.setOnClickListener(v -> {
-            RootBus.get(KEY_EVENT_STR).post("我是值\n");
-            RootBus.get(Apple.class).post(new Apple("红色\n"));
-            RootBus.get(Apple.class).post(new Apple("绿色\n"));
+            // 字符串方式需带上Key
+            RootBus.post(KEY_EVENT_STR, "我是值\n");
+            // 类方式无需带上Key
+            RootBus.post(new Apple("红色\n"));
+            RootBus.post(new Apple("绿色\n"));
         });
         // 接收器注册
+        // 字符串方式注册，需与发送到KEY保持一致，否则无法接受
         RootBus.get(KEY_EVENT_STR).register(this, s -> binding.tvShow.append((String)s));
+        // 类方式
         Observer<Apple> mAppleObserver = apple -> binding.tvShow.append(apple.getColor());
         RootBus.get(Apple.class).registerForever(mAppleObserver);
         // 注销测试

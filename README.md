@@ -19,3 +19,44 @@ dependencies {
     implementation 'com.github.Dazhi528:RootBus:x.x.x'
 }
 ```
+
+### 用法
+```
+// ============= 类方式
+1) 定义Bean类
+private static final class Apple {
+    private final String color;
+    public Apple(String color) {
+       this.color = color;
+    }
+    public String getColor() {
+       return color;
+    }
+}
+
+2）注册接收器
+Observer<Apple> mAppleObserver = apple -> binding.tvShow.append(apple.getColor());
+
+// 非粘性注册无需注销，跟随生命周期自动注销
+RootBus.get(Apple.class).register(mAppleObserver);
+
+// 粘性注册需手动注销，否则会内存泄露
+RootBus.get(Apple.class).registerForever(mAppleObserver);
+
+// 粘性时，不用了需调用此方法手动注销
+RootBus.get(Apple.class).unregister(mAppleObserver);
+
+3）发送
+RootBus.post(new Apple("红色\n"));
+RootBus.post(new Apple("绿色\n"));
+
+// ============= 字符串方式
+1）定义成员变量Key
+private static final String KEY_EVENT_STR = "KeyEventStr";
+
+2）注册接收器(同样支持粘性注册方式，详情同如上的类方式)
+RootBus.get(KEY_EVENT_STR).register(this, s -> binding.tvShow.append((String)s));
+
+3）发送
+RootBus.post(KEY_EVENT_STR, "我是值\n");
+```
