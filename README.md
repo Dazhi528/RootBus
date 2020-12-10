@@ -20,9 +20,8 @@ dependencies {
 }
 ```
 
-### 用法
+### 用法（实例详情见sample模块）
 ```
-// ============= 类方式
 1) 定义Bean类
 private static final class Apple {
     private final String color;
@@ -35,28 +34,21 @@ private static final class Apple {
 }
 
 2）注册接收器
+// 粘性注册方式
 Observer<Apple> mAppleObserver = apple -> binding.tvShow.append(apple.getColor());
+RootBus.registerForever(Apple.class, mAppleObserver);
 
-// 非粘性注册无需注销，跟随生命周期自动注销
-RootBus.get(Apple.class).register(mAppleObserver);
+// 通用注销方式：粘性注册需手动注销，否则会内存泄露
+RootBus.unregister(Apple.class, mAppleObserver);
+或
+new RootBusComposite().add(xxx).dispose();
 
-// 粘性注册需手动注销，否则会内存泄露
-RootBus.get(Apple.class).registerForever(mAppleObserver);
-
-// 粘性时，不用了需调用此方法手动注销
-RootBus.get(Apple.class).unregister(mAppleObserver);
+// 非粘性注册方式； 说明：非粘性注册无需注销，跟随生命周期自动注销(当然完全可以调用如上的手动注销方法)
+RootBus.register(Apple.class, this, mAppleObserver);
 
 3）发送
+// 值在工作线程回调接收
 RootBus.post(new Apple("红色\n"));
-RootBus.post(new Apple("绿色\n"));
-
-// ============= 字符串方式
-1）定义成员变量Key
-private static final String KEY_EVENT_STR = "KeyEventStr";
-
-2）注册接收器(同样支持粘性注册方式，详情同如上的类方式)
-RootBus.get(KEY_EVENT_STR).register(this, s -> binding.tvShow.append((String)s));
-
-3）发送
-RootBus.post(KEY_EVENT_STR, "我是值\n");
+// 值在UI线程回调接收
+RootBus.postToMain(new Apple("绿色\n"));
 ```

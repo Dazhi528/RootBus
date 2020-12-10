@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @SuppressWarnings({"unused", "RedundantSuppression"})
 public class RootBus {
-    final Map<String, EventLiveData<Object>> mapBusEvent;
+    private final Map<String, EventLiveData<Object>> mapBusEvent;
 
     private RootBus() {
         mapBusEvent = new ConcurrentHashMap<>();
@@ -86,7 +86,7 @@ public class RootBus {
 
     @SuppressWarnings("unchecked")
     @MainThread
-    private <T> void _registerForever(@NonNull Class<T> eventType, @NonNull Observer<T> observer) {
+    private <T> RootBusComposite.EventComposite _registerForever(@NonNull Class<T> eventType, @NonNull Observer<T> observer) {
         final String key = eventType.getName();
         EventLiveData<?> existing = mapBusEvent.get(key);
         if (existing == null) {
@@ -101,9 +101,10 @@ public class RootBus {
         }else {
             existing.observeForever(observer);
         }
+        return new RootBusComposite.EventComposite(eventType, observer);
     }
-    public static <T> void registerForever(@NonNull Class<T> eventType, @NonNull Observer<T> observer) {
-        own()._registerForever(eventType, observer);
+    public static <T> RootBusComposite.EventComposite registerForever(@NonNull Class<T> eventType, @NonNull Observer<T> observer) {
+        return own()._registerForever(eventType, observer);
     }
 
     @MainThread

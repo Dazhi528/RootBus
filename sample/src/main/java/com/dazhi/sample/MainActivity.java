@@ -5,6 +5,7 @@ import android.widget.TextView;
 import androidx.lifecycle.Observer;
 
 import com.dazhi.bus.RootBus;
+import com.dazhi.bus.RootBusComposite;
 import com.dazhi.bus.RootBusExecutor;
 import com.dazhi.libroot.root.RootSimpActivity;
 import com.dazhi.libroot.util.RtCmn;
@@ -33,6 +34,9 @@ public class MainActivity extends RootSimpActivity<ActivityMainBinding> {
 
     @Override
     protected void initViewAndDataAndEvent() {
+        // 用于收集粘性注册事件，可统一移除
+        final RootBusComposite mRootBusComposite = new RootBusComposite();
+        //
         binding.btSend.setOnClickListener(v -> {
             // UI线程发送到UI线程
             RootBus.postToMain(new Apple("红色"));
@@ -40,19 +44,19 @@ public class MainActivity extends RootSimpActivity<ActivityMainBinding> {
             // 工作线程发送,注意需要加点间隔，否则LiveData库会只接收最后一个，前面的丢弃
             new Thread(() -> {
                 // 工作线程发送到UI线程
-                RootBus.postToMain(new Person("UI线程A", 15));
+                RootBus.postToMain(new Person("李四", 15));
                 // 工作线程发送到工作线程
                 RootBus.post(new Person("张三", 13));
                 //
-                RootBus.postToMain(new Person("UI线程B", 18));
+                RootBus.postToMain(new Person("孙五", 18));
             }).start();
         });
         // 粘性注册方式，不用时，需要手动调用注销方法，否则会内存泄露
-        Observer<Apple> mAppleObserver1 = apple -> binding.tvShow.append("观察者1，当前线程："+Thread.currentThread().getName()+"；颜色："+apple.color+"\n");
-        RootBus.registerForever(Apple.class, mAppleObserver1);
+        Observer<Apple> mAppleObserver1 = apple -> binding.tvShow.append("观察者1；颜色："+apple.color+"\n");
+        mRootBusComposite.add(RootBus.registerForever(Apple.class, mAppleObserver1));
         // 多次注册的情况
-        Observer<Apple> mAppleObserver2 = apple -> binding.tvShow.append("观察者2，当前线程："+Thread.currentThread().getName()+"；颜色："+apple.color+"\n");
-        RootBus.registerForever(Apple.class, mAppleObserver2);
+        Observer<Apple> mAppleObserver2 = apple -> binding.tvShow.append("观察者2；颜色："+apple.color+"\n");
+        mRootBusComposite.add(RootBus.registerForever(Apple.class, mAppleObserver2));
 
         // 非粘性注册方式，无需手动调用注销
         RootBus.register( Person.class, this, mPerson -> {
@@ -65,9 +69,11 @@ public class MainActivity extends RootSimpActivity<ActivityMainBinding> {
         // 注销测试
         binding.btClear.setOnClickListener(v -> {
             binding.tvShow.setText("Apple.class 接收器已注销\n");
-            RootBus.unregister(Apple.class, mAppleObserver1);
+            // RootBus.unregister(Apple.class, mAppleObserver1);
             // 测试：观察注销如下和不注销的区别
-            RootBus.unregister(Apple.class, mAppleObserver2);
+            // RootBus.unregister(Apple.class, mAppleObserver2);
+            // 收集器统一移除方式
+            mRootBusComposite.dispose();
         });
     }
 
