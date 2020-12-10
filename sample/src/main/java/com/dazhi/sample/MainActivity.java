@@ -67,7 +67,7 @@ public class MainActivity extends RootSimpActivity<ActivityMainBinding> {
             binding.tvShow.setText("Apple.class 接收器已注销\n");
             RootBus.unregister(Apple.class, mAppleObserver1);
             // 测试：观察注销如下和不注销的区别
-            // RootBus.unregister(Apple.class, mAppleObserver2);
+            RootBus.unregister(Apple.class, mAppleObserver2);
         });
     }
 

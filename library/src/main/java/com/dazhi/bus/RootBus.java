@@ -171,18 +171,19 @@ public class RootBus {
             if (!mMapEvent.containsKey(observer)) {
                 return;
             }
-            super.removeObserver(mMapEvent.get(observer));
+            EventObserver<T> temp = mMapEvent.get(observer);
             mMapEvent.remove(observer);
+            super.removeObserver(temp);
         }
 
         @Override
         protected void onInactive() {
             if(mMapEvent.size()>0) {
-                Iterator<EventObserver<T>> mIterator = mMapEvent.values().iterator();
-                EventObserver<T> eo;
+                Iterator<Observer> mIterator = mMapEvent.keySet().iterator();
+                Observer temp;
                 while (mIterator.hasNext()) {
-                    eo = mIterator.next();
-                    removeObserver(eo);
+                    temp = mIterator.next();
+                    removeObserver(temp);
                 }
                 mMapEvent.clear();
             }
