@@ -7,6 +7,7 @@ import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -64,10 +65,15 @@ public class RootBus {
     @SuppressWarnings("unchecked")
     @MainThread
     private <T> void _register(@NonNull Class<T> eventType, @NonNull LifecycleOwner owner, @NonNull Observer<T> observer) {
-        String key = eventType.getName();
+        final String key = eventType.getName();
         EventLiveData<?> existing = mapBusEvent.get(key);
         if (existing == null) {
-            EventLiveData<T> newLd = new EventLiveData<>();
+            EventLiveData<T> newLd = new EventLiveData<>(key, new EventLiveData.Callback() {
+                @Override
+                public void remove() {
+                    mapBusEvent.remove(key);
+                }
+            });
             newLd.observe(owner, observer);
             mapBusEvent.put(key, (EventLiveData<Object>) newLd);
         }else {
@@ -81,10 +87,15 @@ public class RootBus {
     @SuppressWarnings("unchecked")
     @MainThread
     private <T> void _registerForever(@NonNull Class<T> eventType, @NonNull Observer<T> observer) {
-        String key = eventType.getName();
+        final String key = eventType.getName();
         EventLiveData<?> existing = mapBusEvent.get(key);
         if (existing == null) {
-            EventLiveData<T> newLd = new EventLiveData<>();
+            EventLiveData<T> newLd = new EventLiveData<>(key, new EventLiveData.Callback() {
+                @Override
+                public void remove() {
+                    mapBusEvent.remove(key);
+                }
+            });
             newLd.observeForever(observer);
             mapBusEvent.put(key, (EventLiveData<Object>) newLd);
         }else {
@@ -100,9 +111,7 @@ public class RootBus {
         String key = eventType.getName();
         EventLiveData<?> existing = mapBusEvent.get(key);
         if (existing != null) {
-            if(existing.removeObserverAndReturn(observer)<=0) {
-                mapBusEvent.remove(key);
-            }
+            existing.removeObserver(observer);
         }
     }
     public static <T> void unregister(@NonNull Class<T> eventType, @NonNull Observer<T> observer) {
@@ -116,7 +125,15 @@ public class RootBus {
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
     private static final class EventLiveData<T> extends MutableLiveData {
+        interface Callback { void remove(); }
+        final String key;
+        final Callback mCallback;
         final HashMap<Observer, EventObserver<T>> mMapEvent = new HashMap<>();
+
+        EventLiveData(@NonNull String key, @NonNull Callback mCallback) {
+            this.key = key;
+            this.mCallback = mCallback;
+        }
 
         // 说明：此方法并发时,采取的是丢弃之前要最后一个值的策略，
         //      而我们不希望丢弃任何值，因此，此处延时100并加锁处理
@@ -149,10 +166,6 @@ public class RootBus {
             super.observeForever(e);
         }
 
-        int removeObserverAndReturn(@NonNull Observer observer) {
-            removeObserver(observer);
-            return mMapEvent.size();
-        }
         @Override
         public void removeObserver(@NonNull Observer observer) {
             if (!mMapEvent.containsKey(observer)) {
@@ -161,6 +174,20 @@ public class RootBus {
             super.removeObserver(mMapEvent.get(observer));
             mMapEvent.remove(observer);
         }
+
+        @Override
+        protected void onInactive() {
+            if(mMapEvent.size()>0) {
+                Iterator<EventObserver<T>> mIterator = mMapEvent.values().iterator();
+                EventObserver<T> eo;
+                while (mIterator.hasNext()) {
+                    eo = mIterator.next();
+                    removeObserver(eo);
+                }
+                mMapEvent.clear();
+            }
+            mCallback.remove();
+         }
     }
 
     private static final class EventObserver<T> implements Observer<Event<T>> {

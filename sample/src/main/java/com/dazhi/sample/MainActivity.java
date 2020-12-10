@@ -53,6 +53,7 @@ public class MainActivity extends RootSimpActivity<ActivityMainBinding> {
         // 多次注册的情况
         Observer<Apple> mAppleObserver2 = apple -> binding.tvShow.append("观察者2，当前线程："+Thread.currentThread().getName()+"；颜色："+apple.color+"\n");
         RootBus.registerForever(Apple.class, mAppleObserver2);
+
         // 非粘性注册方式，无需手动调用注销
         RootBus.register( Person.class, this, mPerson -> {
             if(RootBusExecutor.own().isMainThread()) {
