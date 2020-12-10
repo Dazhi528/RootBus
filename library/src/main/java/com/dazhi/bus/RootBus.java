@@ -51,10 +51,12 @@ public class RootBus {
         }
     }
 
+    // 接收数据在IO线程，注意池中只开了4个核心线程，因此耗时任务不要死循环或死锁占用线程影响其它任务
     public static <T> void post(T event) {
         send(event, false);
     }
 
+    // 接收数据在UI线程，因此接收器内不允许做耗时操作
     public static <T> void postToMain(T event) {
         send(event, true);
     }
@@ -68,6 +70,8 @@ public class RootBus {
             EventLiveData<T> newLd = new EventLiveData<>();
             newLd.observe(owner, observer);
             mapBusEvent.put(key, (EventLiveData<Object>) newLd);
+        }else {
+            existing.observe(owner, observer);
         }
     }
     public static <T> void register(@NonNull Class<T> eventType, @NonNull LifecycleOwner owner, @NonNull Observer<T> observer) {
@@ -83,6 +87,8 @@ public class RootBus {
             EventLiveData<T> newLd = new EventLiveData<>();
             newLd.observeForever(observer);
             mapBusEvent.put(key, (EventLiveData<Object>) newLd);
+        }else {
+            existing.observeForever(observer);
         }
     }
     public static <T> void registerForever(@NonNull Class<T> eventType, @NonNull Observer<T> observer) {
@@ -94,23 +100,13 @@ public class RootBus {
         String key = eventType.getName();
         EventLiveData<?> existing = mapBusEvent.get(key);
         if (existing != null) {
-            existing.removeObserver(observer);
+            if(existing.removeObserverAndReturn(observer)<=0) {
+                mapBusEvent.remove(key);
+            }
         }
     }
     public static <T> void unregister(@NonNull Class<T> eventType, @NonNull Observer<T> observer) {
         own()._unregister(eventType, observer);
-    }
-
-    @MainThread
-    private <T> void _unregisters(@NonNull Class<T> eventType, @NonNull LifecycleOwner owner) {
-        String key = eventType.getName();
-        EventLiveData<?> existing = mapBusEvent.get(key);
-        if (existing != null) {
-            existing.removeObservers(owner);
-        }
-    }
-    public static <T> void unregisters(@NonNull Class<T> eventType, @NonNull LifecycleOwner owner) {
-        own()._unregisters(eventType, owner);
     }
 
     /**
@@ -122,10 +118,21 @@ public class RootBus {
     private static final class EventLiveData<T> extends MutableLiveData {
         final HashMap<Observer, EventObserver<T>> mMapEvent = new HashMap<>();
 
+        // 说明：此方法并发时,采取的是丢弃之前要最后一个值的策略，
+        //      而我们不希望丢弃任何值，因此，此处延时100并加锁处理
+        @Override
+        public synchronized void postValue(Object value) {
+            super.postValue(value);
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ignored) { }
+        }
+
         @Override
         public void observe(@NonNull LifecycleOwner owner, @NonNull Observer observer) {
+            // 同一个观察者只能放入一次，这里抛出异常帮助查找问题
             if (mMapEvent.containsKey(observer)) {
-                return;
+                throw new IllegalArgumentException("Cannot add the same observer");
             }
             EventObserver<T> e = new EventObserver(observer);
             mMapEvent.put(observer, e);
@@ -135,13 +142,17 @@ public class RootBus {
         @Override
         public void observeForever(@NonNull Observer observer) {
             if (mMapEvent.containsKey(observer)) {
-                return;
+                throw new IllegalArgumentException("Cannot add the same observer");
             }
             EventObserver<T> e = new EventObserver(observer);
             mMapEvent.put(observer, e);
             super.observeForever(e);
         }
 
+        int removeObserverAndReturn(@NonNull Observer observer) {
+            removeObserver(observer);
+            return mMapEvent.size();
+        }
         @Override
         public void removeObserver(@NonNull Observer observer) {
             if (!mMapEvent.containsKey(observer)) {
