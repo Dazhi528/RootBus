@@ -86,7 +86,7 @@ public class RootBus {
 
     @SuppressWarnings("unchecked")
     @MainThread
-    private <T> RootBusComposite.EventComposite _registerForever(@NonNull Class<T> eventType, @NonNull Observer<T> observer) {
+    private <T> RootBusDisposable _registerForever(@NonNull Class<T> eventType, @NonNull Observer<T> observer) {
         final String key = eventType.getName();
         EventLiveData<?> existing = mapBusEvent.get(key);
         if (existing == null) {
@@ -101,9 +101,9 @@ public class RootBus {
         }else {
             existing.observeForever(observer);
         }
-        return new RootBusComposite.EventComposite(eventType, observer);
+        return new RootBusDisposable(eventType, observer);
     }
-    public static <T> RootBusComposite.EventComposite registerForever(@NonNull Class<T> eventType, @NonNull Observer<T> observer) {
+    public static <T> RootBusDisposable registerForever(@NonNull Class<T> eventType, @NonNull Observer<T> observer) {
         return own()._registerForever(eventType, observer);
     }
 

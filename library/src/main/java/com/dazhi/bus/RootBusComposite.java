@@ -1,7 +1,6 @@
 package com.dazhi.bus;
 
 import androidx.annotation.NonNull;
-import androidx.lifecycle.Observer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -14,31 +13,20 @@ import java.util.List;
  * 日期：20-12-10 下午2:33
  */
 public class RootBusComposite {
-    private final List<EventComposite> lsEventComposite = new ArrayList<>();
-
-    @SuppressWarnings("rawtypes")
-    public static final class EventComposite {
-        private final Class eventType;
-        private final Observer observer;
-
-        public EventComposite(@NonNull Class eventType, @NonNull Observer observer) {
-            this.eventType = eventType;
-            this.observer = observer;
-        }
-    }
+    private final List<RootBusDisposable> lsRootBusDisposable = new ArrayList<>();
 
     @SuppressWarnings("UnusedReturnValue")
-    public synchronized RootBusComposite add(@NonNull EventComposite mEventComposite) {
-        lsEventComposite.add(mEventComposite);
+    public synchronized RootBusComposite add(@NonNull RootBusDisposable mRootBusDisposable) {
+        lsRootBusDisposable.add(mRootBusDisposable);
         return this;
     }
 
     public synchronized void dispose() {
-        if(lsEventComposite.size()==0) {
+        if(lsRootBusDisposable.size()==0) {
             return;
         }
-        Iterator<EventComposite> mIterator = lsEventComposite.iterator();
-        EventComposite temp;
+        Iterator<RootBusDisposable> mIterator = lsRootBusDisposable.iterator();
+        RootBusDisposable temp;
         while (mIterator.hasNext()) {
             temp = mIterator.next();
             RootBus.unregister(temp.eventType, temp.observer);
