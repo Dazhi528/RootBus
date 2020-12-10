@@ -1,6 +1,7 @@
 package com.dazhi.bus;
 
 import android.annotation.SuppressLint;
+import android.os.Handler;
 import android.os.Looper;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -15,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 日期：20-12-9 下午4:14
  */
 public class RootBusExecutor {
+    private final Handler mMainHandler = new Handler(Looper.getMainLooper());
     private final ExecutorService mEsIO = Executors.newFixedThreadPool(4, new ThreadFactory() {
         private static final String THREAD_NAME_FORMAT = "io_thread_%d";
         private final AtomicInteger mThreadId = new AtomicInteger(0);
@@ -39,7 +41,10 @@ public class RootBusExecutor {
         return Looper.getMainLooper().getThread() == Thread.currentThread();
     }
 
-    public void execute(Runnable command) {
+    public void executeOnIo(Runnable command) {
         mEsIO.execute(command);
+    }
+    public void executeOnMain(Runnable command) {
+        mMainHandler.post(command);
     }
 }

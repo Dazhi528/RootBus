@@ -136,13 +136,15 @@ public class RootBus {
         }
 
         // 说明：此方法并发时,采取的是丢弃之前要最后一个值的策略，
-        //      而我们不希望丢弃任何值，因此，此处延时100并加锁处理
+        //      而我们不希望丢弃任何值，因此，切到主线程调用不丢的方法
         @Override
-        public synchronized void postValue(Object value) {
-            super.postValue(value);
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException ignored) { }
+        public void postValue(final Object value) {
+            RootBusExecutor.own().executeOnMain(new Runnable() {
+                @Override
+                public void run() {
+                    setValue(value);
+                }
+            });
         }
 
         @Override
@@ -203,7 +205,7 @@ public class RootBus {
             if (t.isMain) {
                 mObserver.onChanged(t.event);
             } else {
-                RootBusExecutor.own().execute(new Runnable() {
+                RootBusExecutor.own().executeOnIo(new Runnable() {
                     @Override
                     public void run() {
                         mObserver.onChanged(t.event);
